@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "165311224144",
+    "project_id": "task-aad40",
+    "storage_bucket": "task-aad40.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:165311224144:android:90dc67069364dc03743455",
+        "android_client_info": {
+          "package_name": "cgg.gov.in.task"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "165311224144-p9i3ckc4bvpv2oie0l0r94egqa2idk4e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxCjYfPP3vp8Rhlz8PpkR1BzV6RMgljMo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "165311224144-p9i3ckc4bvpv2oie0l0r94egqa2idk4e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

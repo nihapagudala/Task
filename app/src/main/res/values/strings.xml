@@ -1,4 +1,16 @@
 <resources>
     <string name="app_name">Task</string>
     <string name="title_activity_maps">Map</string>
+    <string name="loc_sett">Location settings are inadequate, and cannot be fixed here. Fix in Settings.</string>
+    <string name="plz_grant_loc">Please turn on device location to proceed further</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="default_info_title" >Title</string>
+    <string name="default_info_snippet">Snippet</string>
+    <string name="pick_place">Pick Place</string>
+    <string name="con_time_out">The connection has timed out, please try again</string>
+    <string name="something">Something went wrong, please try again</string>
+    <string name="jsonreader">Malformed Json Exception</string>
+    <string name="server_not">Server not responding, Please try later</string>
+
 </resources>
