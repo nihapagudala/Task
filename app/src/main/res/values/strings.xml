@@ -15,5 +15,6 @@
     <string name="loc_not_ava">Location Not Available</string>
     <string name="loc_not_found">Location details are not found</string>
     <string name="companies_not_found">Nearby no Companies found</string>
+    <string name="current_loc">Current Location</string>
 
 </resources>

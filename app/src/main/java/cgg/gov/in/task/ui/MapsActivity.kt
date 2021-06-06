@@ -2,25 +2,42 @@ package cgg.gov.`in`.task.ui
 
 import android.Manifest
 import android.app.Activity
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
+import android.text.TextUtils
+import android.view.LayoutInflater
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import cgg.gov.`in`.task.R
 import cgg.gov.`in`.task.`interface`.ServiceInterface
+import cgg.gov.`in`.task.adapter.CompaniesAdapter
+import cgg.gov.`in`.task.adapter.CustomInfoWindowAdapter
+import cgg.gov.`in`.task.databinding.EmpBottomSheetBinding
 import cgg.gov.`in`.task.error_handler.ErrorHandler
 import cgg.gov.`in`.task.error_handler.ErrorHandlerInterface
 import cgg.gov.`in`.task.model.CompaniesRes
 import cgg.gov.`in`.task.utils.AppConstants
 import cgg.gov.`in`.task.utils.Utils
 import cgg.gov.`in`.task.viewmodel.MapViewModel
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -28,9 +45,8 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionDeniedResponse
@@ -198,8 +214,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                         e.printStackTrace()
                     }
 
-//                    val icon = BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(this.resources, R.drawable.dialog_round))
-                    googleMap.addMarker(
+                    val icon = BitmapDescriptorFactory.fromBitmap(
+                        BitmapFactory.decodeResource(
+                            this.resources,
+                            R.drawable.location_current
+                        )
+                    )
+
+                    val adapter = CustomInfoWindowAdapter(this)
+                    googleMap.setInfoWindowAdapter(adapter)
+
+
+                    var markerMap: HashMap<String, String> = HashMap<String, String>()
+
+                    val current_marker: Marker = googleMap.addMarker(
                         MarkerOptions()
                             .position(
                                 LatLng(
@@ -207,14 +235,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                                     mLastLocation.longitude
                                 )
                             )
-                            .title("Current Location")
+                            .title(getString(R.string.current_loc))
                             .snippet(address)
-//                            .icon(icon)
+                            .icon(icon)
                     )
+                    current_marker.showInfoWindow()
 
                     val cameraPosition = CameraPosition.Builder()
                         .target(LatLng(mLastLocation.latitude, mLastLocation.longitude))
-                        .zoom(17f)
+                        .zoom(11f)
                         .build()
                     googleMap.moveCamera(
                         CameraUpdateFactory.newCameraPosition(
@@ -230,8 +259,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                     if (companiesTempList.size > 0) {
 //                        Toast.makeText(this, "size " + companiesTempList.size, Toast.LENGTH_LONG)
 //                            .show()
+
+                        val icon = BitmapDescriptorFactory.fromBitmap(
+                            BitmapFactory.decodeResource(
+                                this.resources,
+                                R.drawable.location_blue
+                            )
+                        )
                         for (item in companiesTempList) {
-                            googleMap.addMarker(
+                            val marker: Marker = googleMap.addMarker(
                                 MarkerOptions()
                                     .position(
                                         LatLng(
@@ -239,11 +275,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                                             item.longitude
                                         )
                                     )
-                                    .title(item.company_name)
-                                    .snippet(item.company_description)
-//                            .icon(icon)
+                                    .title(item.avg_rating.toString())
+                                    .icon(icon)
                             )
+//                            marker.showInfoWindow()
                         }
+
+                        googleMap.setOnMarkerClickListener { marker ->
+                            if (marker.isInfoWindowShown) {
+                                marker.hideInfoWindow()
+                            } else {
+                                marker.showInfoWindow()
+                                val pos: Int = 2
+                                showBottomsheetDialog(companiesTempList.get(pos), pos)
+                            }
+                            true
+                        }
+
+
                     } else {
                         Toast.makeText(this, R.string.companies_not_found, Toast.LENGTH_LONG).show()
                     }
@@ -253,6 +302,83 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                         .show()
                 }
             }
+    }
+
+
+    private fun showBottomsheetDialog(item: CompaniesRes, pos: Int) {
+        val empBottomSheetBinding: EmpBottomSheetBinding = DataBindingUtil.inflate(
+            LayoutInflater.from(this),
+            R.layout.emp_bottom_sheet, null, false
+        )
+        val dialog: Dialog = BottomSheetDialog(this)
+        dialog.setContentView(empBottomSheetBinding.getRoot())
+        dialog.setCanceledOnTouchOutside(true)
+        dialog.setCancelable(true)
+        dialog.show()
+
+        val distance = (item.distance) / 1000
+        empBottomSheetBinding.tvName.setText(item.company_name)
+        empBottomSheetBinding.tvDes.setText(item.company_description)
+        empBottomSheetBinding.tvRating.setText(item.avg_rating.toString())
+        empBottomSheetBinding.tvDistance.setText("%.1f".format(distance) + " km")
+        empBottomSheetBinding.ratingbar.rating = item.avg_rating.toFloat()
+
+        if (!TextUtils.isEmpty(item.company_image_url)) {
+            empBottomSheetBinding.pBar.setVisibility(View.VISIBLE)
+            Glide.with(this)
+                .load(item.company_image_url)
+                .error(R.drawable.login_user)
+                .listener(object : RequestListener<Drawable?> {
+                    override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any,
+                        target: Target<Drawable?>,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        empBottomSheetBinding.pBar.setVisibility(View.GONE)
+                        empBottomSheetBinding.ivUser.setVisibility(View.VISIBLE)
+                        empBottomSheetBinding.ivUser.setImageDrawable(
+                            resources.getDrawable(
+                                R.drawable.login_user
+                            )
+                        )
+                        return false
+                    }
+
+                    override fun onResourceReady(
+                        resource: Drawable?,
+                        model: Any,
+                        target: Target<Drawable?>,
+                        dataSource: DataSource,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        empBottomSheetBinding.pBar.setVisibility(View.GONE)
+                        empBottomSheetBinding.ivUser.setVisibility(View.VISIBLE)
+                        return false
+                    }
+                })
+                .into(empBottomSheetBinding.ivUser)
+
+        }
+
+        setAdapter(empBottomSheetBinding, pos)
+    }
+
+    private fun setAdapter(binding: EmpBottomSheetBinding, pos: Int) {
+        var list: MutableList<CompaniesRes> = mutableListOf<CompaniesRes>()
+        list.addAll(companiesTempList)
+        list.removeAt(pos)
+
+        val attendanceAdapter = CompaniesAdapter(this, list)
+        binding.recyclerview.setAdapter(attendanceAdapter)
+        binding.recyclerview.setLayoutManager(
+            LinearLayoutManager(
+                this,
+                RecyclerView.HORIZONTAL,
+                false
+            )
+        )
+
     }
 
     private fun getNearCompanies(item: CompaniesRes) {
@@ -284,6 +410,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
         if (dLocation != null && dLocation!!.latitude > 0 && dLocation!!.longitude > 0) {
             var distance: Float = Utils.calcDistance(cLocation!!, dLocation)
             if (distance <= AppConstants.DISTANCE) {
+                item.distance = distance
                 companiesTempList.add(item)
             }
         } else {
@@ -345,4 +472,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
             }
         }
     }
+
+//    override fun onInfoWindowClick(marker: Marker) {
+
+
+//        String actionId = markerMap . get (marker.getId());
+//
+//        if (actionId.equals("action_one")) {
+//            Intent i = new Intent(MainActivity.this, ActivityOne.class);
+//            startActivity(i);
+//        } else if (actionId.equals("action_two")) {
+//
+//        }
+//    }
+
+
 }
