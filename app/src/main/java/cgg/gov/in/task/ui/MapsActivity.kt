@@ -8,6 +8,7 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
+import android.location.Location
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +18,8 @@ import cgg.gov.`in`.task.`interface`.ServiceInterface
 import cgg.gov.`in`.task.error_handler.ErrorHandler
 import cgg.gov.`in`.task.error_handler.ErrorHandlerInterface
 import cgg.gov.`in`.task.model.CompaniesRes
+import cgg.gov.`in`.task.utils.AppConstants
+import cgg.gov.`in`.task.utils.Utils
 import cgg.gov.`in`.task.viewmodel.MapViewModel
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
@@ -44,7 +47,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
         const val REQUEST_CHECK_SETTINGS = 43
     }
 
+    private lateinit var mLastLocation: Location
     private lateinit var companiesList: List<CompaniesRes>
+    private lateinit var companiesTempList: MutableList<CompaniesRes>
     private lateinit var googleMap: GoogleMap
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private var myAttendanceViewModel: MapViewModel? = null
@@ -118,8 +123,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
 
         val locationRequest = LocationRequest()
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.interval = (10 * 1000).toLong()
-        locationRequest.fastestInterval = 2000
+        locationRequest.interval = (10 * 60 * 1000).toLong()
+        locationRequest.fastestInterval = 1000 * 60 * 2
 
         val builder = LocationSettingsRequest.Builder()
         builder.addLocationRequest(locationRequest)
@@ -174,7 +179,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
         fusedLocationProviderClient.lastLocation
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful && task.result != null) {
-                    val mLastLocation = task.result
+                    mLastLocation = task.result
 
                     var address = "No known address"
 
@@ -182,7 +187,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                     val addresses: List<Address>
                     try {
                         addresses = gcd.getFromLocation(
-                            mLastLocation!!.latitude,
+                            mLastLocation.latitude,
                             mLastLocation.longitude,
                             1
                         )
@@ -198,7 +203,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                         MarkerOptions()
                             .position(
                                 LatLng(
-                                    mLastLocation!!.latitude,
+                                    mLastLocation.latitude,
                                     mLastLocation.longitude
                                 )
                             )
@@ -216,11 +221,74 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                             cameraPosition
                         )
                     )
+
+                    companiesTempList = mutableListOf<CompaniesRes>()
+                    for (item in companiesList) {
+                        getNearCompanies(item)
+                    }
+
+                    if (companiesTempList.size > 0) {
+//                        Toast.makeText(this, "size " + companiesTempList.size, Toast.LENGTH_LONG)
+//                            .show()
+                        for (item in companiesTempList) {
+                            googleMap.addMarker(
+                                MarkerOptions()
+                                    .position(
+                                        LatLng(
+                                            item.latitude,
+                                            item.longitude
+                                        )
+                                    )
+                                    .title(item.company_name)
+                                    .snippet(item.company_description)
+//                            .icon(icon)
+                            )
+                        }
+                    } else {
+                        Toast.makeText(this, R.string.companies_not_found, Toast.LENGTH_LONG).show()
+                    }
+
                 } else {
                     Toast.makeText(this, "No current location found", Toast.LENGTH_LONG)
                         .show()
                 }
             }
+    }
+
+    private fun getNearCompanies(item: CompaniesRes) {
+
+        var cLocation: Location? = null
+        var dLocation: Location? = null
+
+        item.let {
+            if (it.latitude != 0.0 && it.longitude != 0.0) {
+                dLocation = Location("dLoc")
+                dLocation!!.latitude = item.latitude
+                dLocation!!.longitude = item.longitude
+
+            }
+        }
+        mLastLocation.let {
+            if (it.latitude != 0.0 && it.longitude != 0.0) {
+                cLocation = Location("cLoc")
+                cLocation!!.latitude = it.latitude
+                cLocation!!.longitude = it.longitude
+            }
+        }
+
+        if (cLocation == null) {
+            Toast.makeText(this, R.string.loc_not_ava, Toast.LENGTH_LONG).show()
+            return
+        }
+
+        if (dLocation != null && dLocation!!.latitude > 0 && dLocation!!.longitude > 0) {
+            var distance: Float = Utils.calcDistance(cLocation!!, dLocation)
+            if (distance <= AppConstants.DISTANCE) {
+                companiesTempList.add(item)
+            }
+        } else {
+            Toast.makeText(this, R.string.loc_not_found, Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

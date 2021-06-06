@@ -1,5 +1,6 @@
 package cgg.gov.`in`.task.utils
 
+import android.location.Location
 import okhttp3.ResponseBody
 import org.json.JSONObject
 
@@ -13,5 +14,10 @@ class Utils {
                 e.message
             }
         }
+
+        fun calcDistance(crtLocation: Location, desLocation: Location?): Float {
+            return crtLocation.distanceTo(desLocation) // in meters
+        }
+
     }
 }

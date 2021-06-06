@@ -12,5 +12,8 @@
     <string name="something">Something went wrong, please try again</string>
     <string name="jsonreader">Malformed Json Exception</string>
     <string name="server_not">Server not responding, Please try later</string>
+    <string name="loc_not_ava">Location Not Available</string>
+    <string name="loc_not_found">Location details are not found</string>
+    <string name="companies_not_found">Nearby no Companies found</string>
 
 </resources>
