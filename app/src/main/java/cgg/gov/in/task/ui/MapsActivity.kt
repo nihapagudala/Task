@@ -240,10 +240,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                             .icon(icon)
                     )
                     current_marker.showInfoWindow()
+                    current_marker.tag=getString(R.string.current_loc)
 
                     val cameraPosition = CameraPosition.Builder()
                         .target(LatLng(mLastLocation.latitude, mLastLocation.longitude))
-                        .zoom(11f)
+                        .zoom(5f)
                         .build()
                     googleMap.moveCamera(
                         CameraUpdateFactory.newCameraPosition(
@@ -257,8 +258,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                     }
 
                     if (companiesTempList.size > 0) {
-//                        Toast.makeText(this, "size " + companiesTempList.size, Toast.LENGTH_LONG)
-//                            .show()
+                        Toast.makeText(
+                            this,
+                            "Nearby " + companiesTempList.size + " companies found",
+                            Toast.LENGTH_LONG
+                        )
+                            .show()
 
                         val icon = BitmapDescriptorFactory.fromBitmap(
                             BitmapFactory.decodeResource(
@@ -266,6 +271,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                                 R.drawable.location_blue
                             )
                         )
+                        var pos = 0
                         for (item in companiesTempList) {
                             val marker: Marker = googleMap.addMarker(
                                 MarkerOptions()
@@ -275,10 +281,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                                             item.longitude
                                         )
                                     )
+
                                     .title(item.avg_rating.toString())
                                     .icon(icon)
                             )
-//                            marker.showInfoWindow()
+                            marker.tag = pos.toString();
+                            pos++
                         }
 
                         googleMap.setOnMarkerClickListener { marker ->
@@ -286,8 +294,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                                 marker.hideInfoWindow()
                             } else {
                                 marker.showInfoWindow()
-                                val pos: Int = 2
-                                showBottomsheetDialog(companiesTempList.get(pos), pos)
+                                val pos: String = marker.tag as String
+                                if (!pos.equals(getString(R.string.current_loc)))
+                                    showBottomsheetDialog(
+                                        companiesTempList.get(pos.toInt()),
+                                        pos.toInt()
+                                    )
                             }
                             true
                         }
