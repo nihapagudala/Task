@@ -1,4 +1,4 @@
-package cgg.gov.`in`.task.ui
+package cgg.gov.`in`.task.view
 
 import android.Manifest
 import android.app.Activity

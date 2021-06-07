@@ -10,7 +10,7 @@ import cgg.gov.`in`.task.`interface`.ServiceInterface
 import cgg.gov.`in`.task.error_handler.ErrorHandlerInterface
 import cgg.gov.`in`.task.model.CompaniesRes
 import cgg.gov.`in`.task.network.ServiceCalls
-import cgg.gov.`in`.task.ui.MapsActivity
+import cgg.gov.`in`.task.view.MapsActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
