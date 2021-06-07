@@ -16,5 +16,6 @@
     <string name="loc_not_found">Location details are not found</string>
     <string name="companies_not_found">Nearby no Companies found</string>
     <string name="current_loc">Current Location</string>
+    <string name="plz_check_int">No network connectivity found, please check your internet connection</string>
 
 </resources>

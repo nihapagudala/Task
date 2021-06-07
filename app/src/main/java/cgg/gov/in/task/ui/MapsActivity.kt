@@ -31,6 +31,7 @@ import cgg.gov.`in`.task.error_handler.ErrorHandler
 import cgg.gov.`in`.task.error_handler.ErrorHandlerInterface
 import cgg.gov.`in`.task.model.CompaniesRes
 import cgg.gov.`in`.task.utils.AppConstants
+import cgg.gov.`in`.task.utils.CustomProgressDialog
 import cgg.gov.`in`.task.utils.Utils
 import cgg.gov.`in`.task.viewmodel.MapViewModel
 import com.bumptech.glide.Glide
@@ -69,6 +70,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
     private lateinit var googleMap: GoogleMap
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private var myAttendanceViewModel: MapViewModel? = null
+    private var customProgressDialog: CustomProgressDialog? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,21 +81,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment!!.getMapAsync(this)
         fusedLocationProviderClient = FusedLocationProviderClient(this)
+        customProgressDialog = CustomProgressDialog(this)
+
 
     }
 
     private fun callService() {
         myAttendanceViewModel = MapViewModel(this, application)
-
-//        customProgressDialog.show()
-//        val attendanceResLiveData: LiveData<List<CompaniesRes>?>? =
-        myAttendanceViewModel?.getServiceResponse()
-
-        /*attendanceResLiveData?.observe(this,
-            androidx.lifecycle.Observer<List<Any>?> { response ->
-//                customProgressDialog.dismiss()
-
-            })*/
+        if (Utils.checkInternetConnection(this)) {
+            customProgressDialog?.show()
+            myAttendanceViewModel?.getServiceResponse()
+        } else {
+            Toast.makeText(this, getString(R.string.plz_check_int), Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onMapReady(map: GoogleMap?) {
@@ -139,8 +139,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
 
         val locationRequest = LocationRequest()
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.interval = (10 * 60 * 1000).toLong()
-        locationRequest.fastestInterval = 1000 * 60 * 2
+        locationRequest.interval = (1000 * 10).toLong() //10sec
+        locationRequest.fastestInterval = 1000 * 2 //2 sec
 
         val builder = LocationSettingsRequest.Builder()
         builder.addLocationRequest(locationRequest)
@@ -240,7 +240,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
                             .icon(icon)
                     )
                     current_marker.showInfoWindow()
-                    current_marker.tag=getString(R.string.current_loc)
+                    current_marker.tag = getString(R.string.current_loc)
 
                     val cameraPosition = CameraPosition.Builder()
                         .target(LatLng(mLastLocation.latitude, mLastLocation.longitude))
@@ -322,7 +322,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
             LayoutInflater.from(this),
             R.layout.emp_bottom_sheet, null, false
         )
-        val dialog: Dialog = BottomSheetDialog(this)
+        val dialog: Dialog = BottomSheetDialog(this, R.style.AppBottomSheetDialogTheme)
         dialog.setContentView(empBottomSheetBinding.getRoot())
         dialog.setCanceledOnTouchOutside(true)
         dialog.setCancelable(true)
@@ -455,6 +455,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
     }
 
     override fun getCompanies(response: List<CompaniesRes>?) {
+        customProgressDialog?.dismiss()
         if (response?.size != null) {
             companiesList = response
             if (isPermissionGiven()) {
