@@ -42,7 +42,8 @@ class MapViewModel : AndroidViewModel {
 
     private fun getServiceResponseCall() {
         val virtuoService: ServiceCalls = ServiceCalls.Factory.create()
-        virtuoService.allCompanies.enqueue(object : Callback<List<CompaniesRes>?> {
+
+        virtuoService.allCompanies.enqueue(object : Callback<List<CompaniesRes>> {
             override fun onResponse(
                 call: Call<List<CompaniesRes>?>,
                 response: Response<List<CompaniesRes>?>
@@ -63,5 +64,6 @@ class MapViewModel : AndroidViewModel {
         })
     }
 }
+
 
 
