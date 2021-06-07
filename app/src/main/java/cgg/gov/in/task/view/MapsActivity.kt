@@ -39,6 +39,8 @@ import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -83,6 +85,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
         fusedLocationProviderClient = FusedLocationProviderClient(this)
         customProgressDialog = CustomProgressDialog(this)
 
+        if (!CheckGooglePlayServices()) {
+            Toast.makeText(this, R.string.google_play_services, Toast.LENGTH_SHORT).show()
+            finish()
+        }
 
     }
 
@@ -486,18 +492,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, PermissionListener
         }
     }
 
-//    override fun onInfoWindowClick(marker: Marker) {
-
-
-//        String actionId = markerMap . get (marker.getId());
-//
-//        if (actionId.equals("action_one")) {
-//            Intent i = new Intent(MainActivity.this, ActivityOne.class);
-//            startActivity(i);
-//        } else if (actionId.equals("action_two")) {
-//
-//        }
-//    }
+    private fun CheckGooglePlayServices(): Boolean {
+        val googleAPI = GoogleApiAvailability.getInstance()
+        val result = googleAPI.isGooglePlayServicesAvailable(this)
+        if (result != ConnectionResult.SUCCESS) {
+            if (googleAPI.isUserResolvableError(result)) {
+                googleAPI.getErrorDialog(
+                    this, result,
+                    0
+                ).show()
+            }
+            return false
+        }
+        return true
+    }
 
 
 }
